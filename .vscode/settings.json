@@ -1,0 +1,8 @@
+{
+  "files.associations": {
+    "array": "cpp",
+    "nullfont.c": "cpp",
+    "initializer_list": "cpp",
+    "*.inc": "cpp"
+  }
+}
