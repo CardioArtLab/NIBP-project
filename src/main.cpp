@@ -15,47 +15,57 @@ extern "C" void app_main()
   pinMode(HMI_TX, OUTPUT);
   pinMode(HMI_RX, INPUT_PULLDOWN);
   
+  // Main task Controll HMI via UART1
+  //xTaskCreatePinnedToCore(HMITask, "HMITask", 2048, NULL, 0, NULL, ARDUINO_RUNNING_CORE);
+  xTaskCreate(HMITask, "HMITask", 2048, NULL, 0, NULL);
+  //xTaskCreatePinnedToCore(NIBPReaderTask, "NIBPReader", 2048, NULL, 0, NULL, ARDUINO_RUNNING_CORE);
+  xTaskCreate(NIBPReaderTask, "NIBPReader", 2048, NULL, 0, NULL);
+}
+
+void HMITask(void *pvParameters) 
+{
+  bool isWorking = false;
+  uint8_t tick = 0;
   for (;;) 
   {
     hmi.read();
     if (hmi.getResponseType() == HMI_RESPONSE_TYPE_NUMBER_DATA) {
       if (hmi.getResponseAsNumber() == 0x1b) {
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-        hmi.sendCmd("isLd.val=2");
-        hmi.sendCmd("tSys.txt=\"120\"");
-        hmi.sendCmd("tDia.txt=\"70\"");
-        hmi.sendCmd("t0.txt=\"68\"");        
+        isWorking = true;
+        nibp.start();
       } else if (hmi.getResponseAsNumber() == 0x1c) {
-        hmi.renderBPMarker(HMI_BP_TYPE_SYSTOLIC, 190);
-        hmi.renderBPMarker(HMI_BP_TYPE_SYSTOLIC, 150);
-        hmi.renderBPMarker(HMI_BP_TYPE_SYSTOLIC, 160);
-        hmi.renderBPMarker(HMI_BP_TYPE_DIASTOLIC, 70);
+        hmi.renderBPMarker(HMI_BP_TYPE_SYSTOLIC, nibp.systolicPressure);
+        hmi.renderBPMarker(HMI_BP_TYPE_DIASTOLIC, nibp.diastolicPressure);
       } else if (hmi.getResponseAsNumber() == 0x00) {
-        printf("Stop");
-        //nibo.stop();
+        isWorking = false;
+        nibp.stop();
       }
     }
+    if (nibp.cuffPressure == 999) {
+      isWorking = false;
+      nibp.cuffPressure = 0;
+      nibp.requestData();
+      hmi.setSystolicBP(nibp.systolicPressure);
+      hmi.setDiastolicBP(nibp.diastolicPressure);
+      hmi.setHeartRate(nibp.pulseRate);
+      hmi.sendCmd("isLd.val=2");
+    } else if (nibp.isReady() && tick >= 255 && isWorking) {
+      tick = 0;
+      hmi.setSystolicBP(nibp.cuffPressure);      
+    }
+    tick++;
   }
-  /*
-  nibp.start();
-  vTaskDelay(1000 / portTICK_PERIOD_MS);
-  nibp.stop();
-  
-  while (SerialNIBP.available() > 0) {
-    nibp.read();
-  }
-  printf("\n\n[Cuff] Pressure: %d, Error: %d, Status: %d\n"
-    , nibp.cuffPressure
-    , nibp.cuffError
-    , nibp.cuffStatus
-  );
+  vTaskDelete(NULL);
+}
 
-  nibp.requestData();
-  
-  printf("\n\nSystolic: %d, Diastolic %d, PulseRate %d, time %d\n"
-    , nibp.systolicPressure
-    , nibp.diastolicPressure
-    , nibp.pulseRate
-    , nibp.usedTime
-  );*/
+void NIBPReaderTask(void *pvParameters)
+{
+  for (;;) {
+    if (SerialNIBP.available() > 0) {
+      nibp.read();
+    } else {
+      vTaskDelay(30 / portTICK_PERIOD_MS);
+    }
+  }
+  vTaskDelete(NULL);
 }

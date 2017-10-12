@@ -41,6 +41,18 @@ void HMI::renderBPMarker(uint8_t bptype, uint16_t value) {
   }
 }
 
+void HMI::setSystolicBP(uint16_t value) {
+  serial->printf("tSys.txt=\"%d\"\xff\xff\xff", value);
+}
+
+void HMI::setDiastolicBP(uint16_t value) {
+  serial->printf("tDia.txt=\"%d\"\xff\xff\xff", value);
+}
+
+void HMI::setHeartRate(uint16_t value) {
+  serial->printf("t0.txt=\"%d\"\xff\xff\xff", value);
+}
+
 void HMI::read() {
   uint8_t state = 0;
   uint8_t endCount = 0;
@@ -54,6 +66,7 @@ void HMI::read() {
       if (endCount >= 3)
         return;
     }
+    printf("%d.", byte);
     if (state == 0) {
       type = byte;
       state = 1;

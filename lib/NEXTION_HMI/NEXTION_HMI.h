@@ -27,6 +27,9 @@ public:
   void sendCmd(const char* cmd);
   void renderPicture(uint16_t x, uint16_t y, uint8_t pictureId);
   void renderBPMarker(uint8_t bptype, uint16_t value);
+  void setSystolicBP(uint16_t value);
+  void setDiastolicBP(uint16_t value);
+  void setHeartRate(uint16_t value);
   void read();
   uint8_t getResponseType();
   uint8_t* getResponseAsString();

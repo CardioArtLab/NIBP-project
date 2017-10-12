@@ -34,18 +34,20 @@ typedef struct nibp_result_t {
 
 class NIBP
 {
+private:
+  bool _isReady = false;
 public:
-  uint8_t cuffPressure;
+  uint16_t cuffPressure;
   uint8_t cuffError;
   uint8_t cuffStatus;
   uint8_t status;
   uint8_t mode;
   uint8_t cycleMode;
   uint8_t message;
-  uint8_t systolicPressure;
-  uint8_t diastolicPressure;
-  uint8_t meanAtrial;
-  uint8_t pulseRate;
+  uint16_t systolicPressure;
+  uint16_t diastolicPressure;
+  uint16_t meanAtrial;
+  uint16_t pulseRate;
   uint16_t usedTime;
 
   NIBP();
@@ -58,6 +60,7 @@ public:
   void setInitInflat(uint8_t init_inflat);
   void setMode(uint8_t mode);
   void read();
+  bool isReady();
 protected:
   HardwareSerial* serial;
 };

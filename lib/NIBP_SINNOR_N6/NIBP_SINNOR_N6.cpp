@@ -12,6 +12,10 @@ NIBP::NIBP(HardwareSerial* serial): serial(serial) {
   serial->begin(4800, SERIAL_8N1);
 }
 
+bool NIBP::isReady() {
+  return _isReady;
+}
+
 void NIBP::start() {
   serial->printf("\00201;;D7\x03\r");
 }
@@ -36,44 +40,43 @@ void NIBP::requestData() {
   {
     int byte = serial->read();
     if (byte == -1) continue;
-    printf("%d.", byte, byte);
     if (isFound && byte == '\r') return;
     
     if (state == 0 && byte == 'S') {state = 1; isFound = true;}
-    else if (state == 1) status = byte - '0';
-    else if (state == 1 && byte == ';') state = 2;
-    else if (state == 2 && byte == 'A') state = 3;
-    else if (state == 3) mode = byte = '0';
-    else if (state == 3 && byte == ';') state = 4;
-    else if (state == 4 && byte == 'C') state = 5;
-    else if (state == 5) {cycleMode = 10*(byte - '0'); state = 6;}
-    else if (state == 6) {cycleMode += (byte - '0'); state = 7;}
-    else if (state == 7 && byte == ';') state = 8;
-    else if (state == 8 && byte == 'M') state = 9;
-    else if (state == 9) {message = 10*(byte - '0'); state = 10;}
-    else if (state == 10) {message += (byte - '0'); state = 11;}
-    else if (state == 11 && byte == ';') state = 12;
-    else if (state == 12 && byte == 'P') state = 13;
-    else if (state == 13) {systolicPressure = 100*(byte - '0'); state = 14;}
-    else if (state == 14) {systolicPressure += 10*(byte - '0'); state = 15;}
-    else if (state == 15) {systolicPressure += (byte - '0'); state = 16;}
-    else if (state == 16) {diastolicPressure = 100*(byte - '0'); state = 17;}
-    else if (state == 17) {diastolicPressure += 10*(byte - '0'); state = 18;}
-    else if (state == 18) {diastolicPressure += (byte - '0'); state = 19;}
-    else if (state == 19) {meanAtrial = 100*(byte - '0'); state = 20;}
-    else if (state == 20) {meanAtrial += 10*(byte - '0'); state = 21;}
-    else if (state == 21) {meanAtrial += (byte - '0'); state = 22;}
-    else if (state == 22 && byte == ';') state = 23;
-    else if (state == 23 && byte == 'R') state = 24;
-    else if (state == 24) {pulseRate = 100*(byte - '0'); state = 25;}
-    else if (state == 25) {pulseRate += 10*(byte - '0'); state = 26;}
-    else if (state == 26) {pulseRate += (byte - '0'); state = 27;}
-    else if (state == 27 && byte == ';') state = 28;
-    else if (state == 28 && byte == 'T') state = 29;
-    else if (state == 29) {usedTime = 1000*(byte - '0'); state = 30;}
-    else if (state == 30) {usedTime += 100*(byte - '0'); state = 31;}
-    else if (state == 31) {usedTime += 10*(byte - '0'); state = 32;}
-    else if (state == 32) {usedTime += (byte - '0'); state = 33;}
+    else if (state == 1) {status = byte - '0';state = 2;}
+    else if (state == 2 && byte == ';') state = 3;
+    else if (state == 3 && byte == 'A') state = 4;
+    else if (state == 4) {mode = byte - '0';state = 5;}
+    else if (state == 5 && byte == ';') state = 6;
+    else if (state == 6 && byte == 'C') state = 7;
+    else if (state == 7) {cycleMode = 10*(byte - '0'); state = 8;}
+    else if (state == 8) {cycleMode += (byte - '0'); state = 9;}
+    else if (state == 9 && byte == ';') state = 10;
+    else if (state == 10 && byte == 'M') state = 11;
+    else if (state == 11) {message = 10*(byte - '0'); state = 12;}
+    else if (state == 12) {message += (byte - '0'); state = 13;}
+    else if (state == 13 && byte == ';') state = 14;
+    else if (state == 14 && byte == 'P') state = 15;
+    else if (state == 15) {systolicPressure = 100*(byte - '0'); state = 16;}
+    else if (state == 16) {systolicPressure += 10*(byte - '0'); state = 17;}
+    else if (state == 17) {systolicPressure += (byte - '0'); state = 18;}
+    else if (state == 18) {diastolicPressure = 100*(byte - '0'); state = 19;}
+    else if (state == 19) {diastolicPressure += 10*(byte - '0'); state = 20;}
+    else if (state == 20) {diastolicPressure += (byte - '0'); state = 21;}
+    else if (state == 21) {meanAtrial = 100*(byte - '0'); state = 22;}
+    else if (state == 22) {meanAtrial += 10*(byte - '0'); state = 23;}
+    else if (state == 23) {meanAtrial += (byte - '0'); state = 24;}
+    else if (state == 24 && byte == ';') state = 25;
+    else if (state == 25 && byte == 'R') state = 26;
+    else if (state == 26) {pulseRate = 100*(byte - '0'); state = 27;}
+    else if (state == 27) {pulseRate += 10*(byte - '0'); state = 28;}
+    else if (state == 28) {pulseRate += (byte - '0'); state = 29;}
+    else if (state == 29 && byte == ';') state = 30;
+    else if (state == 30 && byte == 'T') state = 31;
+    else if (state == 31) {usedTime = 1000*(byte - '0'); state = 32;}
+    else if (state == 32) {usedTime += 100*(byte - '0'); state = 33;}
+    else if (state == 33) {usedTime += 10*(byte - '0'); state = 34;}
+    else if (state == 34) {usedTime += (byte - '0'); state = 35;}
     
     if (byte == 0x02) state = 0;
     if (byte == 0x03) state = -1;
@@ -111,7 +114,7 @@ void NIBP::read() {
   for(;;)
   {
     int byte = serial->read();
-    if (byte == -1) continue;
+    if (byte == -1) return;
     if (byte == '\r') return;
     
     if (state == 0) {cuffPressure = 100*(byte - '0'); state = 1;}
@@ -122,7 +125,7 @@ void NIBP::read() {
     else if (state == 5 && byte == 'S') state = 6;
     else if (state == 6) {cuffStatus = byte - '0'; state = 7;}
 
-    if (byte == 0x02) state = 0;
-    if (byte == 0x03) state = -1;
+    if (byte == 0x02) {state = 0;_isReady = false;}
+    if (byte == 0x03) {state = -1;_isReady = true;}
   }
 }
