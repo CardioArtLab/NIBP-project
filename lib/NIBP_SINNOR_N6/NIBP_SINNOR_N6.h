@@ -52,6 +52,7 @@ public:
 
   NIBP();
   NIBP(HardwareSerial* serial);
+  NIBP(HardwareSerial* serial, int8_t rxPin, int8_t txPin);
   void start();
   void stop();
   void beginManometerMode();
