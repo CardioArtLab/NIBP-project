@@ -11,8 +11,8 @@
         {
             "type": "platformio-debug",
             "request": "launch",
-            "name": "PlatformIO Debugger",
-            "executable": "d:/src/cardioart/NIBP/node32s-2/.pioenvs/node32s/firmware.elf",
+            "name": "PIO Debug",
+            "executable": "d:/src/cardioart/NIBP/node32s/.pioenvs/node32s/firmware.elf",
             "toolchainBinDir": "C:/Users/JIRAWAT/.platformio/packages/toolchain-xtensa32/bin",
             "preLaunchTask": "PlatformIO: Pre-Debug",
             "internalConsoleOptions": "openOnSessionStart"
@@ -20,8 +20,8 @@
         {
             "type": "platformio-debug",
             "request": "launch",
-            "name": "PlatformIO Debugger (Skip Pre-Debug)",
-            "executable": "d:/src/cardioart/NIBP/node32s-2/.pioenvs/node32s/firmware.elf",
+            "name": "PIO Debug (Skip Pre-Debug)",
+            "executable": "d:/src/cardioart/NIBP/node32s/.pioenvs/node32s/firmware.elf",
             "toolchainBinDir": "C:/Users/JIRAWAT/.platformio/packages/toolchain-xtensa32/bin",
             "internalConsoleOptions": "openOnSessionStart"
         }

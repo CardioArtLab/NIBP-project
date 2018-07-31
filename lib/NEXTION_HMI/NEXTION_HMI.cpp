@@ -8,8 +8,11 @@ HMI::HMI() {
   serial = &Serial;
   serial->begin(9600, SERIAL_8N1);
 }
-HMI::HMI(HardwareSerial* serial): serial(serial) {
-  serial->begin(9600, SERIAL_8N1);
+HMI::HMI(HardwareSerial* serial): serial(serial) {}
+void HMI::begin(uint8_t rxPin, uint8_t txPin) {
+  pinMode(rxPin, INPUT_PULLDOWN);
+  pinMode(txPin, OUTPUT);
+  serial->begin(9600, SERIAL_8N1, rxPin, txPin);
 }
 
 void HMI::sendCmd(const char* cmd) {

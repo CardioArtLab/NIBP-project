@@ -24,6 +24,7 @@ private:
 public:
   HMI();
   HMI(HardwareSerial* serial);
+  void begin(uint8_t rxPin, uint8_t txPin);
   void sendCmd(const char* cmd);
   void renderPicture(uint16_t x, uint16_t y, uint8_t pictureId);
   void renderBPMarker(uint8_t bptype, uint16_t value);

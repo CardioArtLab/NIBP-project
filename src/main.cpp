@@ -2,15 +2,9 @@
 
 extern "C" void app_main() {
     initArduino();
-    
     // Turn on the background LED
-    pinMode(2, OUTPUT);
-    digitalWrite(2, HIGH);
-    pinMode(NIBP_TX, OUTPUT);
-    pinMode(NIBP_RX, INPUT_PULLDOWN);
-
-    pinMode(HMI_TX, OUTPUT);
-    pinMode(HMI_RX, INPUT_PULLDOWN);
+    pinMode(LED_BUILIN, OUTPUT);
+    digitalWrite(LED_BUILIN, LOW);
 
     // Debugging serial
     Serial.begin(115200);
@@ -24,21 +18,20 @@ extern "C" void app_main() {
       SerialBT.begin("CA-NIBP-0000");
     else
       SerialBT.begin("CA-NIBP-" + name);
-    printf("START\n");
+    Serial.print("START\n");
 
     // Main task Controll HMI via UART1
-    xTaskCreate(HMITask, "HMITask", 2048, NULL, 0, NULL);
-    xTaskCreate(NIBPReaderTask, "NIBPReader", 2048, NULL, 0, NULL);
-    xTaskCreate(ATCommandTask, "ATCommand", 2048, NULL, 0, NULL);
+    xTaskCreatePinnedToCore(HMITask, "HMITask", 2048, NULL, 0, NULL, 1);
+    xTaskCreatePinnedToCore(NIBPReaderTask, "NIBPReader", 2048, NULL, 1, NULL, 1);
+    xTaskCreatePinnedToCore(ATCommandTask, "ATCommand", 2048, NULL, 0, NULL, 0);
     //xTaskCreate(BluetoothServerTask, "BTServer", 512, NULL, 0, NULL);
-    //HMITask(NULL);
     BluetoothServerTask(NULL);
-    for(;;);
 }
 
 void HMITask(void *pvParameters) 
 {
   Serial.println("HMI Task");
+  hmi.begin(HMI_RX, HMI_TX);
   bool isWorking = false;
   uint8_t tick = 0;
   for (;;) 
@@ -78,7 +71,7 @@ void NIBPReaderTask(void *pvParameters)
 {
   Serial.println("NIBPReader Task");
   for (;;) {
-    if (SerialNIBP.available() > 0) {
+    if (Serial2.available() > 0) {
       nibp.read();
     } else {
       vTaskDelay(5 / portTICK_PERIOD_MS);
@@ -91,8 +84,13 @@ void BluetoothServerTask(void *pvParameters)
 {
   Serial.println("BluetoothServer Task");
   for (;;) {
-    if (nibp.isReady() && SerialBT.hasClient()) {
-      SerialBT.printf("\002%03d%03d%03d%03d\x03\r", nibp.cuffPressure, nibp.systolicPressure, nibp.diastolicPressure, nibp.pulseRate);
+    if (SerialBT.hasClient()) {
+      digitalWrite(LED_BUILIN, HIGH);
+      if (nibp.isReady()) {
+        SerialBT.printf("\002%03d%03d%03d%03d\x03\r", nibp.cuffPressure, nibp.systolicPressure, nibp.diastolicPressure, nibp.pulseRate);
+      }
+    } else {
+      digitalWrite(LED_BUILIN, LOW);
     }
     vTaskDelay(1000 / portTICK_PERIOD_MS);
   }

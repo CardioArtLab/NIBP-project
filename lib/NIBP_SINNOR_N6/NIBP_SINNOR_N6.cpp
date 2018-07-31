@@ -12,6 +12,8 @@ NIBP::NIBP(HardwareSerial* serial): serial(serial) {
   serial->begin(4800, SERIAL_8N1);
 }
 NIBP::NIBP(HardwareSerial* serial, int8_t rxPin, int8_t txPin): serial(serial) {
+  pinMode(rxPin, INPUT_PULLDOWN);
+  pinMode(txPin, OUTPUT);
   serial->begin(4800, SERIAL_8N1, rxPin, txPin);
 }
 
