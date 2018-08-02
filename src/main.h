@@ -10,13 +10,13 @@
 #define LED_BUILIN 2
 #define NIBP_TX 17
 #define NIBP_RX 18
-#define HMI_TX 12
+#define HMI_TX 13
 #define HMI_RX 14
 
 BluetoothSerial SerialBT;
 Preferences preference;
 
-NIBP nibp(&Serial2, NIBP_RX, NIBP_TX);
+NIBP nibp(&Serial2);
 HMI hmi(&Serial1);
 
 void HMITask(void *pvParameters);

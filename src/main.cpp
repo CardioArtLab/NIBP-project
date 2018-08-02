@@ -4,6 +4,9 @@ extern "C" void app_main() {
     initArduino();
     // Turn on the background LED
     pinMode(LED_BUILIN, OUTPUT);
+    pinMode(NIBP_TX, OUTPUT);
+    pinMode(HMI_TX, OUTPUT);
+ 
     digitalWrite(LED_BUILIN, LOW);
 
     // Debugging serial
@@ -41,12 +44,18 @@ void HMITask(void *pvParameters)
       if (hmi.getResponseAsNumber() == 0x1b) {
         isWorking = true;
         nibp.start();
+        #ifdef IS_DEBUG
+        Serial.printf("nibp start\n");
+        #endif
       } else if (hmi.getResponseAsNumber() == 0x1c) {
         hmi.renderBPMarker(HMI_BP_TYPE_SYSTOLIC, nibp.systolicPressure);
         hmi.renderBPMarker(HMI_BP_TYPE_DIASTOLIC, nibp.diastolicPressure);
       } else if (hmi.getResponseAsNumber() == 0x00) {
         isWorking = false;
         nibp.stop();
+        #ifdef IS_DEBUG
+        Serial.printf("nibp stop\n");
+        #endif
       }
     }
     if (nibp.cuffPressure == 999) {
@@ -70,6 +79,7 @@ void HMITask(void *pvParameters)
 void NIBPReaderTask(void *pvParameters)
 {
   Serial.println("NIBPReader Task");
+  nibp.begin(NIBP_RX, NIBP_TX);
   for (;;) {
     if (Serial2.available() > 0) {
       nibp.read();
@@ -83,13 +93,30 @@ void NIBPReaderTask(void *pvParameters)
 void BluetoothServerTask(void *pvParameters)
 {
   Serial.println("BluetoothServer Task");
+  bool ledLow = false;
   for (;;) {
     if (SerialBT.hasClient()) {
       digitalWrite(LED_BUILIN, HIGH);
+      ledLow = false;
       if (nibp.isReady()) {
-        SerialBT.printf("\002%03d%03d%03d%03d\x03\r", nibp.cuffPressure, nibp.systolicPressure, nibp.diastolicPressure, nibp.pulseRate);
+        SerialBT.printf("\002%c%c%c%c%c%c%c%c\x03\n", 
+          nibp.cuffPressure >> 8,
+          nibp.cuffPressure & 0xff,
+          nibp.systolicPressure >> 8,
+          nibp.systolicPressure & 0xff,
+          nibp.diastolicPressure >> 8,
+          nibp.diastolicPressure & 0xff,
+          nibp.pulseRate >> 8,
+          nibp.pulseRate & 0xff);
       }
     } else {
+      if (ledLow) {
+        digitalWrite(LED_BUILIN, HIGH);
+        ledLow = false;
+        vTaskDelay(100 / portTICK_PERIOD_MS);
+      } else {
+        ledLow = true;
+      }
       digitalWrite(LED_BUILIN, LOW);
     }
     vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -112,7 +139,7 @@ void ATCommandTask(void *pvParameters)
         if (command.startsWith("ID=")) {
           preference.putString("ID", command.substring(command.indexOf('=')+1));
           isReboot = true;
-          //Serial.printf("%s\r\n", command.substring(command.indexOf('=')+1).c_str());
+          //Se rial.printf("%s\r\n", command.substring(command.indexOf('=')+1).c_str());
         } else if (command.startsWith("ID")) {
           Serial.printf("%s\r\n", preference.getString("ID", "").c_str());
         }
@@ -124,4 +151,5 @@ void ATCommandTask(void *pvParameters)
     }
     vTaskDelay(100 / portTICK_PERIOD_MS);
   }
+  vTaskDelete(NULL);
 }

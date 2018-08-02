@@ -69,7 +69,7 @@ void HMI::read() {
       if (endCount >= 3)
         return;
     }
-    printf("%d.", byte);
+    //printf("%d.", byte);
     if (state == 0) {
       type = byte;
       state = 1;
