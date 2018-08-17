@@ -7,7 +7,7 @@ extern "C" void app_main() {
     pinMode(NIBP_TX, OUTPUT);
     pinMode(HMI_TX, OUTPUT);
  
-    digitalWrite(LED_BUILIN, LOW);
+    digitalWrite(LED_BUILIN, LED_OFF);
 
     // Debugging serial
     Serial.begin(115200);
@@ -96,7 +96,7 @@ void BluetoothServerTask(void *pvParameters)
   bool ledLow = false;
   for (;;) {
     if (SerialBT.hasClient()) {
-      digitalWrite(LED_BUILIN, HIGH);
+      digitalWrite(LED_BUILIN, LED_ON);
       ledLow = false;
       if (nibp.isReady()) {
         SerialBT.printf("\002%c%c%c%c%c%c%c%c\x03\n", 
@@ -111,13 +111,13 @@ void BluetoothServerTask(void *pvParameters)
       }
     } else {
       if (ledLow) {
-        digitalWrite(LED_BUILIN, HIGH);
+        digitalWrite(LED_BUILIN, LED_ON);
         ledLow = false;
         vTaskDelay(100 / portTICK_PERIOD_MS);
       } else {
         ledLow = true;
       }
-      digitalWrite(LED_BUILIN, LOW);
+      digitalWrite(LED_BUILIN, LED_OFF);
     }
     vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
